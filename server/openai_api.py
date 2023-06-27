@@ -1,7 +1,8 @@
 import openai
 import os
 
-openai.api_key = os.get_env("OPENAI_API_KEY")
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
 
 audio_file = open("server/test_audio/oklahoma.mp3", "rb")
 transcript = openai.Audio.transcribe("whisper-1", audio_file)
