@@ -3,12 +3,88 @@ from sqlalchemy import MetaData
 from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.orm import validates
 from sqlalchemy.ext.associationproxy import association_proxy
+from flask import Flask 
 
 metadata = MetaData(naming_convention={
     "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
 })
 
 db = SQLAlchemy(metadata=metadata)
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+
+class Audio2Text(db.Model, SerializerMixin):
+    __tablename__ = 'audio2texts'
+
+    id = db.Column(db.Integer, primary_key=True)
+    audio_file_path = db.Column(db.String(500), unique=True, nullable=False)
+    transcript_text = db.Column(db.Text, unique=False, nullable=False)
+
+    def __repr__(self):
+        return f"Audio2Text # {self.id}: {self.audio_file_path}"
+
+
+class Text2Text(db.Model, SerializerMixin):
+    __tablename__ = 'text2texts'
+
+    id = db.Column(db.Integer, primary_key=True)
+    transcript_text = db.Column(db.Text, nullable=False)
+    prompt = db.Column(db.Text)
+    response = db.Column(db.Text, nullable=False)
+
+    def __repr__(self):
+        return f"Text2Text # {self.id}: {self.prompt}"
+
+
+class Text2Image(db.Model, SerializerMixin):
+    __tablename__ = 'text2images'
+
+    id = db.Column(db.Integer, primary_key=True)
+    prompt = db.Column(db.Text, nullable=False)
+    image_path = db.Column(db.String)
+
+    def __repr__(self):
+        return f"Text2Image # {self.id}: {self.prompt}"
+
+
+
+""" 
+class Audio2Text(db.Model, SerializerMixin):
+    __tablename__ = 'audio2texts'
+
+    id = db.Column(db.Integer, primary_key=True)
+    audio_file_path = db.Column(db.String, nullable=False)
+    transcript_text = db.Column(db.Text, nullable=False)
+
+    def __repr__(self):
+        return f"Audio2Text # {self.id}: {self.audio_file_path}"
+
+class Text2Text(db.Model, SerializerMixin):
+    __tablename__ = 'text2texts'
+
+    id = db.Column(db.Integer, primary_key=True)
+    transcript_text = db.Column(db.Text, nullable=False)
+    prompt = db.Column(db.Text, nullable=False)
+    response = db.Column(db.Text, nullable=False)
+
+    def __repr__(self):
+        return f"Text2Text # {self.id}: {self.prompt}"
+
+class Text2Image(db.Model, SerializerMixin):
+    __tablename__ = 'text2images'
+
+    id = db.Column(db.Integer, primary_key=True)
+    prompt = db.Column(db.Text, nullable=False)
+    image_path = db.Column(db.String, nullable=False)
+
+    def __repr__(self):
+        return f"Text2Image # {self.id}: {self.prompt}"
+""" 
+"""
 
 class Hotel(db.Model, SerializerMixin):
     __tablename__ = 'hotels'
@@ -33,8 +109,8 @@ class Hotel(db.Model, SerializerMixin):
     def __repr__(self):
         return f"Hotel # {self.id}: {self.name} hotel"
 
-class Customer(db.Model, SerializerMixin):
-    __tablename__ = 'customers'
+class Text2Text(db.Model, SerializerMixin):
+    __tablename__ = 'Text2Texts'
 
     serialize_rules = ('-reviews',)
 
@@ -62,6 +138,24 @@ class Customer(db.Model, SerializerMixin):
     def __repr__(self):
         return f"Customer # {self.id}: {self.first_name} {self.last_name}"
     
+class Text2Image(db.Model, SerializerMixin):
+    __tablename__ = 'customers'
+
+    serialize_rules = ('-reviews',)
+
+    id = db.Column(db.Integer, primary_key=True)
+    first_name = db.Column(db.String, nullable=False)
+    last_name = db.Column(db.String, nullable=False)
+
+    reviews = db.relationship('Review', back_populates='customer')
+
+    hotels = association_proxy('reviews', 'hotel',
+        creator=lambda h: Review(hotel=h))
+
+    __table_args__ = (
+        db.CheckConstraint('(first_name != last_name)'),
+    )
+
 class Review(db.Model, SerializerMixin):
     __tablename__ = 'reviews'
 
@@ -78,3 +172,5 @@ class Review(db.Model, SerializerMixin):
 
     def __repr__(self):
         return f"Review # {self.id}: {self.customer.first_name} {self.customer.last_name} left of a review for {self.hotel.name} with a rating of {self.rating}."
+
+"""

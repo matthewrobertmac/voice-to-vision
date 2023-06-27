@@ -8,10 +8,10 @@ from flask_migrate import Migrate
 from flask_restful import Api, Resource
 from flask_cors import CORS
 
-from models import db, Hotel, Customer, Review
+from models import db, Audio2Text, Text2Text, Text2Image
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///hotels.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.json.compact = False
 
@@ -19,8 +19,79 @@ migrate = Migrate(app, db)
 
 db.init_app(app)
 
+api = Api(app) 
+
+# Routes for Audio2Text model
+@app.route('/audio2texts', methods=['GET'])
+def get_audio2texts():
+    audio2texts = Audio2Text.query.all()
+    return jsonify([audio2text.to_dict() for audio2text in audio2texts])
+
+
+@app.route('/audio2texts', methods=['POST'])
+def create_audio2text():
+    data = request.get_json()
+    audio2text = Audio2Text(**data)
+    db.session.add(audio2text)
+    db.session.commit()
+    return jsonify(audio2text.to_dict()), 201
+
+
+@app.route('/audio2texts/<int:audio2text_id>', methods=['GET'])
+def get_audio2text(audio2text_id):
+    audio2text = Audio2Text.query.get(audio2text_id)
+    if audio2text:
+        return jsonify(audio2text.to_dict())
+    return jsonify({'message': 'Audio2Text not found'}), 404
+
+
+@app.route('/audio2texts/<int:audio2text_id>', methods=['PATCH'])
+def update_audio2text(audio2text_id):
+    audio2text = Audio2Text.query.get(audio2text_id)
+    if not audio2text:
+        return jsonify({'message': 'Audio2Text not found'}), 404
+
+    data = request.get_json()
+    audio2text.audio_file_path = data.get('audio_file_path', audio2text.audio_file_path)
+    audio2text.transcript_text = data.get('transcript_text', audio2text.transcript_text)
+    db.session.commit()
+    return jsonify(audio2text.to_dict())
+
+
+@app.route('/audio2texts/<int:audio2text_id>', methods=['DELETE'])
+def delete_audio2text(audio2text_id):
+    audio2text = Audio2Text.query.get(audio2text_id)
+    if audio2text:
+        db.session.delete(audio2text)
+        db.session.commit()
+        return jsonify({'message': 'Audio2Text deleted'})
+    return jsonify({'message': 'Audio2Text not found'}), 404
+
+
+# Routes for Text2Text model
+@app.route('/text2texts', methods=['GET'])
+def get_text2texts():
+    text2texts = Text2Text.query.all()
+    return jsonify([text2text.to_dict() for text2text in text2texts])
+
+
+# Add routes for POST, GET by ID, PATCH, and DELETE for Text2Text model similar to Audio2Text model
+
+# Routes for Text2Image model
+@app.route('/text2images', methods=['GET'])
+def get_text2images():
+    text2images = Text2Image.query.all()
+    return jsonify([text2image.to_dict() for text2image in text2images])
+
+
+# Add routes for POST, GET by ID, PATCH, and DELETE for Text2Image model similar to Audio2Text model
+
+
+if __name__ == '__main__':
+    app.run()
 # CORS(app)
 
+""" 
 api = Api(app)
 
 class Hotels(Resource):
@@ -302,3 +373,4 @@ api.add_resource(ReviewById, '/reviews/<int:id>')
 
 if __name__ == '__main__':
     app.run(port=7000, debug=True)
+    """
