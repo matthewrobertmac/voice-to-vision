@@ -5,7 +5,7 @@ import openai
 # Load environment variables from .env file
 load_dotenv()
 
-audio_file = open("test_audio/Opening – Oh, What A Beautiful Mornin’ (From.mp3", "rb")
+audio_file = open("test_audio/oklahoma.mp3", "rb")
 transcript = openai.Audio.transcribe("whisper-1", audio_file) 
 
 # Set OpenAI API key from the environment variable
