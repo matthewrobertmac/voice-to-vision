@@ -1,9 +1,9 @@
 import openai
 import os
 
-openai.api_key = "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" 
+openai.api_key = os.get_env("OPENAI_API_KEY")
 
-audio_file = open("/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/oklahoma.mp3", "rb")
+audio_file = open("server/test_audio/oklahoma.mp3", "rb")
 transcript = openai.Audio.transcribe("whisper-1", audio_file)
 transcript_text = transcript['text']
 total_length = len(transcript_text)
