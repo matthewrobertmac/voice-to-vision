@@ -13,12 +13,20 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+class Audio(db.Model, SerializerMixin):
+    __tablename__ = 'audios'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200))
+    audio_data = db.Column(db.LargeBinary)
+
+    def __repr__(self):
+        return f"Audio # {self.id}"
+    
 class Audio2Text(db.Model, SerializerMixin):
     __tablename__ = 'audio2texts'
 
     id = db.Column(db.Integer, primary_key=True)
     audio_file_path = db.Column(db.String(500), unique=False, nullable=False)
-    data = db.Column(db.LargeBinary)
 
     transcript_text = db.Column(db.Text, unique=False, nullable=True)
 
@@ -43,10 +51,3 @@ class Text2Image(db.Model, SerializerMixin):
     prompt = db.Column(db.Text, nullable=True)
     image_path = db.Column(db.String, nullable=True)
 
-class Audio(db.Model, SerializerMixin):
-    __tablename__ = 'audios'
-    id = db.Column(db.Integer, primary_key=True)
-    audio_data = db.Column(db.LargeBinary)
-
-    def __repr__(self):
-        return f"Audio # {self.id}"

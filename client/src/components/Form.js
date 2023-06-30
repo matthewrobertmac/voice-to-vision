@@ -16,7 +16,7 @@ function Form() {
     formData.append("mp3Audio", mp3Audio);
 
     try {
-      const response = await fetch("Your-API-endpoint-where-form-data-is-sent", {
+      const response = await fetch("/upload", {
         method: "POST",
         body: formData,
       });
