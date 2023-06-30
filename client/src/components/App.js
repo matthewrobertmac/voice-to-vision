@@ -13,8 +13,6 @@ import "./App.css";
 
 
 
-
-
 function App() {
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);

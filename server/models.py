@@ -10,28 +10,37 @@ metadata = MetaData(naming_convention={
 db = SQLAlchemy(metadata=metadata)
 
 app = Flask(__name__)
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 
 class Audio(db.Model, SerializerMixin):
     __tablename__ = 'audios'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200))
     audio_data = db.Column(db.LargeBinary)
 
     def __repr__(self):
         return f"Audio # {self.id}"
     
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'audio_data': self.audio_data.decode(),
+            'name': self.name
+        }
+
+
 class Audio2Text(db.Model, SerializerMixin):
     __tablename__ = 'audio2texts'
 
     id = db.Column(db.Integer, primary_key=True)
-    audio_file_path = db.Column(db.String(500), unique=False, nullable=False)
-
+    audio_file_path = db.Column(db.String(500), unique=False, nullable=True)
     transcript_text = db.Column(db.Text, unique=False, nullable=True)
 
     def __repr__(self):
         return f"Audio2Text # {self.id}: {self.audio_file_path}"
+
 
 class Text2Text(db.Model, SerializerMixin):
     __tablename__ = 'text2texts'
@@ -44,10 +53,10 @@ class Text2Text(db.Model, SerializerMixin):
     def __repr__(self):
         return f"Text2Text # {self.id}: {self.prompt}"
 
+
 class Text2Image(db.Model, SerializerMixin):
     __tablename__ = 'text2images'
 
     id = db.Column(db.Integer, primary_key=True)
     prompt = db.Column(db.Text, nullable=True)
     image_path = db.Column(db.String, nullable=True)
-

@@ -45,23 +45,21 @@ def upload_file():
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(file_path)
 
-    with open(file_path, 'rb') as audio_file:
-        audio_data = audio_file.read()
-
-    new_file = Audio(name=filename, audio_data=audio_data)
-    db.session.add(new_file)
-    db.session.commit()
-
     try:
         # Transcribe audio
-        audio_io = io.BytesIO(audio_data)
-        transcript = openai.Audio.transcribe("whisper-1", file=audio_io.getvalue())
-        transcript_text = transcript.get('text')
+        with open(file_path, 'rb') as audio_file:
+            audio_data = audio_file.read()  # Read the binary data of the audio file
+            transcript = openai.Audio.transcribe("whisper-1", audio_file)
+            transcript_text = transcript.get('text')
     except Exception as e:
         print(f"Error during transcription: {e}")
         transcript_text = None
 
     if transcript_text:
+        new_audio = Audio(audio_data=audio_data)  # Pass the audio_data to the Audio model
+        db.session.add(new_audio)
+        db.session.commit()
+
         new_audio2text = Audio2Text(audio_file_path=file_path, transcript_text=transcript_text)
         db.session.add(new_audio2text)
         db.session.commit()
