@@ -16,6 +16,8 @@ sqlalchemy = "2.5.1"
 flask-bcrypt = "1.0.1"
 openai = "*"
 flask-restful = "*"
+youtube-dl = "*"
+yt-dlp = "*"
 
 [requires]
 python_full_version = "3.8.13"

@@ -1,140 +1,84 @@
 import openai
-import os
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Assuming these models are defined in a separate 'models.py' file
+from models import Audio2Text, Text2Text, Text2Image
 
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-audio_file = open("/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/oklahoma.mp3", "rb")
-transcript = openai.Audio.transcribe("whisper-1", audio_file)
-transcript_text = transcript['text']
-total_length = len(transcript_text)
-third_length = total_length // 3
+db = SQLAlchemy(app)
+with app.app_context():
+    db.create_all()  # Ensure all the tables exist
 
-transcript_first_third = transcript_text[:third_length]
-transcript_second_third = transcript_text[third_length:2*third_length]
-transcript_third_third = transcript_text[2*third_length:]
+audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/In the Bible, Drake.m4a"
 
-#print("Transcript First Third:")
-#print(transcript_first_third)
+try:
+    # Transcribe audio
+    with open(audio_file_path, "rb") as audio_file:
+        transcript = openai.Audio.transcribe("whisper-1", audio_file)
+        transcript_text = transcript.get('text')
+except Exception as e:
+    print(f"Error during transcription: {e}")
+    transcript_text = None
 
-#print("Transcript Second Third:")
-#print(transcript_second_third)
+if transcript_text:
+    # Save audio to text
+    audio2text = Audio2Text(audio_file_path=audio_file_path, transcript_text=transcript_text)
+    with app.app_context():
+        db.session.add(audio2text)
+        db.session.commit()
+    print("Saved transcript to database.")
+else:
+    print("Transcription returned no text.")
 
-#print("Transcript Third Third:")
-#print(transcript_third_third)
-
-#print(transcript)
-
-response = openai.Completion.create(
-    model="text-davinci-003",
-#   prompt=f"Create an ideal OpenAI DALLE-2 prompt based on themes and imagery pulled from the full text of: {transcript}, and not simply the beginning. The prompt should be concise, evocative, and encourage creative and imaginative visual interpretations. Consider using vivid language, sensory details, and emotional cues to inspire the Whisper model.",
-#    prompt=f"Create an ideal OpenAI DALLE-2 prompt to generate album art for the lyrics and themes and imagery in the full {transcript}",
-#    prompt=f"Transform lyrics into an ideal DALLE-2 or Stable Diffusion v2 prompt, for the purpose of generating images evokative of the lyrics. Use the full transcript, not just the beginning, in: {transcript}",
-    prompt=f"Generate a visual prompt for OpenAI DALL-E 2 using the lyrics from: {transcript} and excluding repetition in the transcript. Use the full transcript, not just the beginning. Use artistic styling and photographic / artistic styling and terms",
-    max_tokens=200,
-    temperature=0
-)
-
-first_third_response = openai.Completion.create(
-    model='text-davinci-003',
-    prompt = f'Generate a visual prompt for OpenAI DALL-E 2 using the transcript available here: {transcript_first_third}',
-    max_tokens=200,
-    temperature=0
-
-)
-
-second_third_response = openai.Completion.create(
-    model='text-davinci-003',
-    prompt = f'Generate a visual prompt for OpenAI DALL-E 2 using the second third of the transcript available here: {transcript_second_third}',
-    max_tokens=200,
-    temperature=0
-
-)
-
-third_third_response = openai.Completion.create(
-    model='text-davinci-003',
-    prompt = f'Generate a visual prompt for OpenAI DALL-E 2 using the last third of the transcript available here: {transcript_third_third}',
-    max_tokens=200,
-    temperature=0
+try:
+    # Create text prompt
+    response = openai.Completion.create(
+        model="text-davinci-003",
+        prompt=f"Generate a visual prompt for OpenAI DALL-E 2 using the lyrics from: {transcript_text} and excluding repetition in the transcript. Use the full transcript, not just the beginning. Use artistic styling and photographic / artistic styling and terms",
+        max_tokens=200,
+        temperature=0
     )
 
-# print(response)
-# print(first_third_response)
-# print(second_third_response)
-# print(third_third_response)
+    choices = response.get('choices', [])
+    dalle2prompt = choices[0]['text'].strip() if choices else ""
+    # Remove special characters
+    dalle2prompt = ''.join(e for e in dalle2prompt if e.isalnum() or e.isspace())
+except Exception as e:
+    print(f"Error during DALL-E 2 prompt generation: {e}")
+    dalle2prompt = None
 
-choices = response['choices']
-if len(choices) > 0:
-    dalle2prompt = choices[0]['text'].strip()
+if dalle2prompt:
+    # Save text to text
+    text2text = Text2Text(transcript_text=transcript_text, prompt=dalle2prompt, response=dalle2prompt)
+    with app.app_context():
+        db.session.add(text2text)
+        db.session.commit()
 else:
-    dalle2prompt = ""
+    print("No prompt generated.")
 
-# Remove special characters
-dalle2prompt = ''.join(e for e in dalle2prompt if e.isalnum() or e.isspace())
+try:
+    # Generate image
+    response = openai.Image.create(
+        prompt=dalle2prompt,
+        n=1,
+        size="1024x1024"
+    )
 
-# print(dalle2prompt)
+    image_url = response["data"][0]["url"] if response.get("data") else None
+except Exception as e:
+    print(f"Error during image generation: {e}")
+    image_url = None
 
-choices_first_third = first_third_response['choices']
-if len(choices_first_third) > 0:
-    dalle2prompt_first_third = choices_first_third[0]['text'].strip()
+if image_url:
+    # Save text to image
+    text2image = Text2Image(prompt=dalle2prompt, image_path=image_url)
+    with app.app_context():
+        db.session.add(text2image)
+        db.session.commit()
+    print(image_url)
 else:
-    dalle2prompt_first_third = ""
-
-# Remove special characters
-dalle2prompt_first_third = ''.join(e for e in dalle2prompt_first_third if e.isalnum() or e.isspace())
-
-# print(dalle2prompt_first_third)
-
-choices_second_third = second_third_response['choices']
-if len(choices_second_third) > 0:
-    dalle2prompt_second_third = choices_second_third[0]['text'].strip()
-else:
-    dalle2prompt_second_third = ""
-
-# Remove special characters
-dalle2prompt_second_third = ''.join(e for e in dalle2prompt_second_third if e.isalnum() or e.isspace())
-
-# print(dalle2prompt_second_third)
-
-choices_third_third = third_third_response['choices']
-if len(choices_third_third) > 0:
-    dalle2prompt_third_third = choices_third_third[0]['text'].strip()
-else:
-    dalle2prompt_third_third = ""
-
-# Remove special characters
-dalle2prompt_second_third = ''.join(e for e in dalle2prompt_third_third if e.isalnum() or e.isspace())
-
-# print(dalle2prompt_third_third)
-
-# Text-to-Image
-
-response = openai.Image.create(
-    prompt=dalle2prompt,
-    n=1,
-    size="1024x1024"
-)
-
-response_first_third = openai.Image.create(
-    prompt=dalle2prompt_first_third,
-    n=1,
-    size="1024x1024"
-)
-
-response_second_third = openai.Image.create(
-    prompt=dalle2prompt_second_third,
-    n=1,
-    size="1024x1024"
-)
-
-response_third_third = openai.Image.create(
-    prompt=dalle2prompt_third_third,
-    n=1,
-    size="1024x1024"
-)
-
-print(response)
-print(response_first_third)
-print(response_second_third)
-print(response_third_third)
-
+    print("No image generated.")

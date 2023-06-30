@@ -1,41 +1,71 @@
 #!/usr/bin/env python3
 
-import ipdb
-
-from flask import Flask, make_response, jsonify, request
+import openai
+import os
+from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask_restful import Api, Resource
+from werkzeug.utils import secure_filename
 from flask_cors import CORS
 
-from models import db, Audio2Text, Text2Text, Text2Image
+# Assuming these models are defined in a separate 'models.py' file
+from models import db, Audio2Text, Text2Text, Text2Image, Audio
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.json.compact = False
 
+UPLOAD_FOLDER = 'server/upload_folder'  # Change this to your path
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
 migrate = Migrate(app, db)
 
 db.init_app(app)
+CORS(app)  # Enable CORS for all routes
 
-api = Api(app) 
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return 'No file part in the request', 400
+    file = request.files['file']
+    filename = secure_filename(file.filename)
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    file.save(file_path)
+    newFile = Audio(audio_data=file_path)
+    db.session.add(newFile)
+    db.session.commit()
+    return "File has been uploaded and stored into the database.", 201
 
-# Routes for Audio2Text model
 @app.route('/audio2texts', methods=['GET'])
 def get_audio2texts():
     audio2texts = Audio2Text.query.all()
     return jsonify([audio2text.to_dict() for audio2text in audio2texts])
 
-
 @app.route('/audio2texts', methods=['POST'])
 def create_audio2text():
     data = request.get_json()
-    audio2text = Audio2Text(**data)
-    db.session.add(audio2text)
-    db.session.commit()
-    return jsonify(audio2text.to_dict()), 201
+    audio_id = data.get('audio_id')
+    audio = Audio.query.get(audio_id)
+    if audio is None:
+        return 'Audio not found', 404
 
+    try:
+        # Transcribe audio
+        with open(audio.audio_data, "rb") as audio_file:
+            transcript = openai.Audio.transcribe("whisper-1", audio_file)
+            transcript_text = transcript.get('text')
+    except Exception as e:
+        print(f"Error during transcription: {e}")
+        transcript_text = None
+
+    if transcript_text:
+        audio2text = Audio2Text(audio_file_path=audio.audio_data, transcript_text=transcript_text)
+        db.session.add(audio2text)
+        db.session.commit()
+        return jsonify(audio2text.to_dict()), 201
+
+    return 'Error transcribing audio', 400
 
 @app.route('/audio2texts/<int:audio2text_id>', methods=['GET'])
 def get_audio2text(audio2text_id):
@@ -43,7 +73,6 @@ def get_audio2text(audio2text_id):
     if audio2text:
         return jsonify(audio2text.to_dict())
     return jsonify({'message': 'Audio2Text not found'}), 404
-
 
 @app.route('/audio2texts/<int:audio2text_id>', methods=['PATCH'])
 def update_audio2text(audio2text_id):
@@ -57,7 +86,6 @@ def update_audio2text(audio2text_id):
     db.session.commit()
     return jsonify(audio2text.to_dict())
 
-
 @app.route('/audio2texts/<int:audio2text_id>', methods=['DELETE'])
 def delete_audio2text(audio2text_id):
     audio2text = Audio2Text.query.get(audio2text_id)
@@ -67,310 +95,90 @@ def delete_audio2text(audio2text_id):
         return jsonify({'message': 'Audio2Text deleted'})
     return jsonify({'message': 'Audio2Text not found'}), 404
 
-
-# Routes for Text2Text model
 @app.route('/text2texts', methods=['GET'])
 def get_text2texts():
     text2texts = Text2Text.query.all()
     return jsonify([text2text.to_dict() for text2text in text2texts])
 
+@app.route('/text2texts', methods=['POST'])
+def create_text2text():
+    data = request.get_json()
+    text2text = Text2Text(**data)
+    db.session.add(text2text)
+    db.session.commit()
+    return jsonify(text2text.to_dict()), 201
 
-# Add routes for POST, GET by ID, PATCH, and DELETE for Text2Text model similar to Audio2Text model
+@app.route('/text2texts/<int:text2text_id>', methods=['GET'])
+def get_text2text(text2text_id):
+    text2text = Text2Text.query.get(text2text_id)
+    if text2text:
+        return jsonify(text2text.to_dict())
+    return jsonify({'message': 'Text2Text not found'}), 404
 
-# Routes for Text2Image model
+@app.route('/text2texts/<int:text2text_id>', methods=['PATCH'])
+def update_text2text(text2text_id):
+    text2text = Text2Text.query.get(text2text_id)
+    if not text2text:
+        return jsonify({'message': 'Text2Text not found'}), 404
+
+    data = request.get_json()
+    text2text.source_text = data.get('source_text', text2text.source_text)
+    text2text.translated_text = data.get('translated_text', text2text.translated_text)
+    db.session.commit()
+    return jsonify(text2text.to_dict())
+
+@app.route('/text2texts/<int:text2text_id>', methods=['DELETE'])
+def delete_text2text(text2text_id):
+    text2text = Text2Text.query.get(text2text_id)
+    if text2text:
+        db.session.delete(text2text)
+        db.session.commit()
+        return jsonify({'message': 'Text2Text deleted'})
+    return jsonify({'message': 'Text2Text not found'}), 404
+
 @app.route('/text2images', methods=['GET'])
 def get_text2images():
     text2images = Text2Image.query.all()
     return jsonify([text2image.to_dict() for text2image in text2images])
 
+@app.route('/text2images', methods=['POST'])
+def create_text2image():
+    data = request.get_json()
+    text2image = Text2Image(**data)
+    db.session.add(text2image)
+    db.session.commit()
+    return jsonify(text2image.to_dict()), 201
 
-# Add routes for POST, GET by ID, PATCH, and DELETE for Text2Image model similar to Audio2Text model
+@app.route('/text2images/<int:text2image_id>', methods=['GET'])
+def get_text2image(text2image_id):
+    text2image = Text2Image.query.get(text2image_id)
+    if text2image:
+        return jsonify(text2image.to_dict())
+    return jsonify({'message': 'Text2Image not found'}), 404
 
+@app.route('/text2images/<int:text2image_id>', methods=['PATCH'])
+def update_text2image(text2image_id):
+    text2image = Text2Image.query.get(text2image_id)
+    if not text2image:
+        return jsonify({'message': 'Text2Image not found'}), 404
 
-if __name__ == '__main__':
-    app.run()
-# CORS(app)
+    data = request.get_json()
+    text2image.source_text = data.get('source_text', text2image.source_text)
+    text2image.image_url = data.get('image_url', text2image.image_url)
+    db.session.commit()
+    return jsonify(text2image.to_dict())
 
-""" 
-api = Api(app)
-
-class Hotels(Resource):
-
-    def get(self):
-        hotels = Hotel.query.all()
-
-        response_body = []
-
-        for hotel in hotels:
-            response_body.append(hotel.to_dict())
-
-        return make_response(jsonify(response_body), 200)
-
-    def post(self):
-        try:
-            new_hotel = Hotel(name=request.get_json().get('name'), image=request.get_json().get('image'))
-            db.session.add(new_hotel)
-            db.session.commit()
-
-            response_body = new_hotel.to_dict()
-            
-            return make_response(jsonify(response_body), 201)
-        except ValueError as error:
-            response_body = {
-                "error": error.args
-            }
-            return make_response(jsonify(response_body), 422)
-
-
-api.add_resource(Hotels, '/hotels')
-
-class HotelById(Resource):
-
-    def get(self, id):
-        hotel = Hotel.query.filter(Hotel.id == id).first()
-
-        if not hotel:
-            response_body = {
-                "error": "Hotel not found"
-            }
-            status = 404
-
-        else:
-            response_body = hotel.to_dict()
-            customer_list = []
-            for customer in list(set(hotel.customers)):
-                customer_list.append({
-                    "id": customer.id,
-                    "first_name": customer.first_name,
-                    "last_name": customer.last_name
-                })
-            response_body.update({"customers": customer_list})
-            status = 200
-
-        return make_response(jsonify(response_body), status)
-    
-    def patch(self, id):
-        hotel = Hotel.query.filter(Hotel.id == id).first()
-
-        if not hotel:
-            response_body = {
-                "error": "Hotel not found"
-            }
-            return make_response(jsonify(response_body), 404)
-
-        else:
-            try:
-                json_data = request.get_json()
-                for key in json_data:
-                    setattr(hotel, key, json_data.get(key))
-                db.session.commit()
-
-                response_body = hotel.to_dict()
-                return make_response(jsonify(response_body), 200)
-            
-            except ValueError as error:
-                
-                response_body = {
-                    "error": error.args
-                }
-                
-                return make_response(jsonify(response_body), 422)
-    
-    def delete(self, id):
-        hotel = Hotel.query.filter(Hotel.id == id).first()
-
-        if not hotel:
-            response_body = {
-                "error": "Hotel not found"
-            }
-            status = 404
-
-        else:
-            db.session.delete(hotel)
-            db.session.commit()
-
-            response_body = {}
-            status = 204
-
-        return make_response(jsonify(response_body), status)
-
-
-api.add_resource(HotelById, '/hotels/<int:id>')
-
-class Customers(Resource):
-
-    def get(self):
-        customers = Customer.query.all()
-
-        response_body = []
-        for customer in customers:
-            response_body.append(customer.to_dict())
-        
-        return make_response(jsonify(response_body), 200)
-    
-    def post(self):
-        try:
-            new_customer = Customer(first_name=request.get_json().get('first_name'), last_name=request.get_json().get('last_name'))
-
-            db.session.add(new_customer)
-            db.session.commit()
-            
-            return make_response(jsonify(new_customer.to_dict()), 201)
-        except ValueError as error:
-            response_body = {
-                "error": error.args
-            }
-            return make_response(jsonify(response_body), 422)
-
-api.add_resource(Customers, '/customers')
-
-class CustomerById(Resource):
-
-    def get(self, id):
-        customer = Customer.query.filter(Customer.id == id).first()
-
-        if not customer:
-            response_body = {
-                "error": "Customer not found"
-            }
-            status = 404
-        else:
-            response_body = customer.to_dict()
-            status = 200
-
-        return make_response(jsonify(response_body), status)
-    
-    def patch(self, id):
-        customer = Customer.query.filter(Customer.id == id).first()
-
-        if not customer:
-            response_body = {
-                "error": "Customer not found"
-            }
-            return make_response(jsonify(response_body), 404)
-        else:
-            try:
-                json_data = request.get_json()
-                
-                for key in json_data:
-                    setattr(customer, key, json_data.get(key))
-
-                db.session.commit()
-
-                response_body = customer.to_dict()
-
-                return make_response(jsonify(response_body), 200)
-            except ValueError as error:
-                response_body = {
-                    "error": error.args
-                }
-                return make_response(jsonify(response_body), 422)
-    
-    def delete(self, id):
-        customer = Customer.query.filter(Customer.id == id).first()
-        
-        if not customer:
-
-            response_body = {
-                "error": "Customer not found"
-            }
-            status = 404
-        
-        else:
-            
-            db.session.delete(customer)
-            db.session.commit()
-
-            response_body = {}
-            status = 204
-
-        return make_response(jsonify(response_body), status)
-
-api.add_resource(CustomerById, '/customers/<int:id>')
-
-class Reviews(Resource):
-
-    def get(self):
-        reviews = Review.query.all()
-
-        response_body = []
-
-        for review in reviews:
-            response_body.append(review.to_dict())
-
-        return make_response(jsonify(response_body), 200)
-    
-    def post(self):
-        json_data = request.get_json()
-        new_review = Review(hotel_id=json_data.get('hotel_id'), customer_id=json_data.get('customer_id'), rating=json_data.get('rating'))
-        db.session.add(new_review)
+@app.route('/text2images/<int:text2image_id>', methods=['DELETE'])
+def delete_text2image(text2image_id):
+    text2image = Text2Image.query.get(text2image_id)
+    if text2image:
+        db.session.delete(text2image)
         db.session.commit()
-
-        response_body = new_review.to_dict()
-        
-        return make_response(jsonify(response_body), 201)
-    
-api.add_resource(Reviews, '/reviews')
-
-class ReviewById(Resource):
-
-    def get(self, id):
-        review = Review.query.filter(Review.id == id).first()
-
-        if not review:
-            response_body = {
-                "error": "Review not found"
-            }
-            status = 404
-        else:
-            response_body = review.to_dict()
-            status = 200
-
-        return make_response(jsonify(response_body), status)
-    
-    def patch(self, id):
-        review = Review.query.filter(Review.id == id).first()
-
-        if not review:
-            response_body = {
-                "error": "Review not found"
-            }
-            status = 404
-        else:
-            json_data = request.get_json()
-
-            for key in json_data:
-                setattr(review, key, json_data.get(key))
-
-            db.session.commit()
-
-            response_body = review.to_dict()
-            status = 200
-
-        return make_response(jsonify(response_body), status)
-    
-    def delete(self, id):
-        review = Review.query.filter(Review.id == id).first()
-        
-        if not review:
-
-            response_body = {
-                "error": "Review not found"
-            }
-            status = 404
-        
-        else:
-            
-            db.session.delete(review)
-            db.session.commit()
-
-            response_body = {}
-            status = 204
-
-        return make_response(jsonify(response_body), status)
-
-api.add_resource(ReviewById, '/reviews/<int:id>')
+        return jsonify({'message': 'Text2Image deleted'})
+    return jsonify({'message': 'Text2Image not found'}), 404
 
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()  # Ensure all the tables exist
+
     app.run(port=7000, debug=True)
-    """

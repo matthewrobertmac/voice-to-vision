@@ -1,108 +1,66 @@
-import '../App.css';
-import {useState, useEffect} from 'react'
-import { Route, Switch } from "react-router-dom"
-
-import NavBar from './NavBar'
-import Header from './Header'
-import HotelList from './HotelList'
-import NewHotelForm from './NewHotelForm'
-import UpdateHotelForm from './UpdateHotelForm'
+import React, { useState, useEffect } from "react";
+import { BrowserRouter, Route, Switch } from 'react-router-dom';
+import axios from 'axios';
+import NavBar from "./NavBar";
+import Home from "./Home";
+import Profile from "./Profile";
+import Text2Texts from "./Text2Texts";
+import Audio2Texts from "./Audio2Texts";
+import Text2Images from "./Text2Images";
+import About from "./About";
 
 function App() {
-
-  const [hotels, setHotels] = useState([])
-  const [postFormData, setPostFormData] = useState({})
-  const [idToUpdate, setIdToUpdate] = useState(0)
-  const [patchFormData, setPatchFormData] = useState({})
+  const [data, setData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch('/hotels')
-    .then(response => response.json())
-    .then(hotelData => setHotels(hotelData))
-  }, [])
+    const fetchData = async () => {
+      try {
+        const response = await axios.get("http://localhost:7000/audio2texts");
+        setData(response.data);
+        setIsLoading(false);
+      } catch (error) {
+        setError(error);
+        setIsLoading(false);
+      }
+    };
 
-  useEffect(() => {
-    if(hotels.length > 0 && hotels[0].id){
-      setIdToUpdate(hotels[0].id)
-    }
-  }, [hotels])
+    fetchData();
+  }, []);
 
-  function addHotel(event){
-    event.preventDefault()
-
-    fetch('/hotels', {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: JSON.stringify(postFormData)
-    })
-    .then(response => response.json())
-    .then(newHotel => setHotels(hotels => [...hotels, newHotel]))
+  if (isLoading) {
+    return <div>Loading...</div>;
   }
 
-  function updateHotel(event){
-    event.preventDefault()
-    fetch(`/hotels/${idToUpdate}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: JSON.stringify(patchFormData)
-    })
-    .then(response => response.json())
-    .then(updatedHotel => {
-      setHotels(hotels => {
-        return hotels.map(hotel => {
-          if(hotel.id === updatedHotel.id){
-            return updatedHotel
-          }
-          else{
-            return hotel
-          }
-        })
-      })
-    })
-  }
-
-  function deleteHotel(id){
-    fetch(`/hotels/${id}`, {
-      method: "DELETE"
-    })
-    .then(() => setHotels(hotels => {
-      return hotels.filter(hotel => {
-        return hotel.id !== id
-      })
-    }))
-  }
-
-  function updatePostFormData(event){
-    setPostFormData({...postFormData, [event.target.name]: event.target.value})
-  }
-
-  function updatePatchFormData(event){
-    setPatchFormData({...patchFormData, [event.target.name]: event.target.value})
+  if (error) {
+    return <div>Error: {error.message}</div>;
   }
 
   return (
-    <div className="app">
-      <NavBar/>
-      <Header />
+    <BrowserRouter>
+      <NavBar />
       <Switch>
-        <Route exact path="/">
-          <h1>Welcome! Here is the list of hotels available:</h1>
-          <HotelList hotels={hotels} deleteHotel={deleteHotel}/>
-        </Route>
-        <Route path="/add_hotel">
-          <NewHotelForm addHotel={addHotel} updatePostFormData={updatePostFormData}/>
-        </Route>
-        <Route path="/update_hotel">
-          <UpdateHotelForm updateHotel={updateHotel} setIdToUpdate={setIdToUpdate} updatePatchFormData={updatePatchFormData} hotels={hotels}/>
-        </Route>
+        <Route path="/" exact component={Home} />
+        <Route
+          path="/profile"
+          render={(props) => <Profile {...props} data={data} />}
+        />
+        <Route path = '/about' component = {About} />
+        <Route
+          path="/text2texts"
+          component={Text2Texts}
+        />
+        <Route
+          path="/audio2texts"
+          component={Audio2Texts}
+        />
+        <Route
+          path="/text2images"
+          component={Text2Images}
+        />
       </Switch>
-    </div>
+    </BrowserRouter>
   );
 }
 
