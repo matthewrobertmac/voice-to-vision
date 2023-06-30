@@ -16,26 +16,41 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.json.compact = False
 
-UPLOAD_FOLDER = 'server/upload_folder'  # Change this to your path
+UPLOAD_FOLDER = '/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/upload_folder'  # Change this to your path
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 migrate = Migrate(app, db)
 
 db.init_app(app)
 CORS(app)  # Enable CORS for all routes
-
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
         return 'No file part in the request', 400
+
     file = request.files['file']
+    if file.filename == '':
+        return 'No selected file', 400
+
+    try:
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    except Exception as e:
+        print(f"Error creating upload folder: {e}")
+        return 'Error creating upload folder', 500
+
     filename = secure_filename(file.filename)
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(file_path)
-    newFile = Audio(audio_data=file_path)
-    db.session.add(newFile)
+
+    with open(file_path, 'rb') as audio_file:
+        audio_data = audio_file.read()
+
+    new_file = Audio(audio_data=audio_data)
+    db.session.add(new_file)
     db.session.commit()
-    return "File has been uploaded and stored into the database.", 201
+
+    return jsonify({'message': 'File uploaded successfully'}), 200
+
 
 @app.route('/audio2texts', methods=['GET'])
 def get_audio2texts():

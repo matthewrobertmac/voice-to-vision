@@ -8,6 +8,12 @@ import Text2Texts from "./Text2Texts";
 import Audio2Texts from "./Audio2Texts";
 import Text2Images from "./Text2Images";
 import About from "./About";
+import Upload from "./Upload";
+import "./App.css";
+
+
+
+
 
 function App() {
   const [data, setData] = useState([]);
@@ -47,6 +53,7 @@ function App() {
           render={(props) => <Profile {...props} data={data} />}
         />
         <Route path = '/about' component = {About} />
+        <Route path = '/upload' component = {Upload} />
         <Route
           path="/text2texts"
           component={Text2Texts}
