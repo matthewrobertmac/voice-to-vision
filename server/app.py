@@ -9,6 +9,10 @@ from werkzeug.utils import secure_filename
 from flask_cors import CORS
 import io
 from flask_bcrypt import Bcrypt
+from google.cloud import storage
+from datetime import datetime, timedelta
+import tempfile
+
 
 # from google.cloud import storage 
 from datetime import datetime, timedelta 
@@ -23,9 +27,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.json.compact = False
 
-# storage_client = storage.Client() # it will auto-discover the credentials
-# bucket_name = 'voice2vision' # replace with your bucket name
-# bucket = storage_client.get_bucket(bucket_name)
+storage_client = storage.Client() # it will auto-discover the credentials
+bucket_name = 'voice2vision' # replace with your bucket name
+bucket = storage_client.get_bucket(bucket_name)
 
 UPLOAD_FOLDER = '/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/upload_folder'  # Change this to your path
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -47,35 +51,39 @@ def upload_file():
     if file.filename == '':
         return 'No selected file', 400
 
-    try:
-        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-    except Exception as e:
-        print(f"Error creating upload folder: {e}")
-        return 'Error creating upload folder', 500
-
     filename = secure_filename(file.filename)
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    file.save(file_path)
+
+    # Save the audio file temporarily
+    temp_file = tempfile.NamedTemporaryFile(delete=False)
+    temp_file_path = temp_file.name
+    file.save(temp_file_path)
+
+    # Upload the audio file to Google Cloud Storage
+    blob_name = f"temp_{filename}"
+    blob = bucket.blob(blob_name)
+    blob.upload_from_filename(temp_file_path)
 
     try:
-        # Transcribe audio, translate audio, extract keywords, determine sentiment   
-        with open(file_path, 'rb') as audio_file:
-            audio_data = audio_file.read()  # Read the binary data of the audio file
-            transcript = openai.Audio.transcribe("whisper-1", audio_file)
- #           translation = openai.Audio.translate("whisper-1", audio_file, target_language="en")
+        # Transcribe audio, translate audio, extract keywords, determine sentiment
+        with open(temp_file_path, 'rb') as audio_file:
+            audio_data = audio_file.read()
 
-
-            transcript_text = transcript.get('text')
+        # Perform audio transcription using the appropriate method
+        transcript = openai.Audio.transcribe('whisper-1', audio_data)
+        transcript_text = transcript.get('text')
     except Exception as e:
         print(f"Error during transcription: {e}")
         transcript_text = None
 
+    os.remove(temp_file_path)
+
     if transcript_text:
-        new_audio = Audio(audio_data=audio_data)  # Pass the audio_data to the Audio model
+        new_audio = Audio(audio_data=blob_name)  # Pass the blob name to the Audio model
         db.session.add(new_audio)
         db.session.commit()
 
-        new_audio2text = Audio2Text(audio_file_path=file_path, transcript_text=transcript_text)
+        audio_file_path = blob.public_url
+        new_audio2text = Audio2Text(audio_file_path=audio_file_path, transcript_text=transcript_text)
         db.session.add(new_audio2text)
         db.session.commit()
         return jsonify({'message': 'File uploaded and transcribed successfully'}), 200

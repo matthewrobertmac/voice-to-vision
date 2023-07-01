@@ -15,12 +15,11 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 
-
 class Audio(db.Model, SerializerMixin):
     __tablename__ = 'audios'
     id = db.Column(db.Integer, primary_key=True)
     audio_data = db.Column(db.LargeBinary)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -30,7 +29,6 @@ class Audio(db.Model, SerializerMixin):
 
 
     
-
 class User(db.Model, SerializerMixin):
     __tablename__ = 'users'
 
