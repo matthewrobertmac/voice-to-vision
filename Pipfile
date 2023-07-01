@@ -22,6 +22,7 @@ google-cloud = "*"
 google-cloud-storage = "*"
 pydub = "*"
 google-cloud-speech = "*"
+flask-oauthlib = "*"
 
 [requires]
 python_full_version = "3.8.13"
