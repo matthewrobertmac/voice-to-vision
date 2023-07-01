@@ -81,6 +81,9 @@ with app.app_context():  # Set up an application context
     response = openai.Completion.create(
         model="text-davinci-003",
         prompt=f"Generate a visual prompt for OpenAI DALL-E 2 using the lyrics from: {transcript} and excluding repetition in the transcript. Use the full transcript, not just the beginning. Use artistic styling and photographic / artistic styling and terms",
+        #prompt=f"Render a composite illustration that visually interprets the entire lyrics from the provided transcript {transcript}. Ensure to avoid any repetitive elements from the transcript in your creation. Embrace a blend of artistic and photographic styles in your execution. Remember to incorporate a rich array of artistic techniques throughout the entirety of the image, and not just focusing on the initial parts. The final output should be a fusion of both creative artistic expression and photographic realism.",
+        #prompt=f"Generate a stunning and dramatic watercolor painting from the provided transcript {transcript}, including bright colors to represent areas of positive sentiment and dark colors to represent areas of negative sentiment.",
+
         max_tokens=200,
         temperature=0
     )
