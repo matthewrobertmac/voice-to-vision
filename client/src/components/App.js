@@ -9,6 +9,7 @@ import Audio2Texts from "./Audio2Texts";
 import Text2Images from "./Text2Images";
 import About from "./About";
 import Upload from "./Upload";
+import UploadOrRecordAudio from "./UploadOrRecordAudio";
 import "./App.css";
 
 
@@ -60,10 +61,12 @@ function App() {
           path="/audio2texts"
           component={Audio2Texts}
         />
+        
         <Route
           path="/text2images"
           component={Text2Images}
         />
+        <Route path="/uploadorrecordaudio" component={UploadOrRecordAudio} />
       </Switch>
     </BrowserRouter>
   );

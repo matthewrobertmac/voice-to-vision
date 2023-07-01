@@ -15,9 +15,6 @@ migrate = Migrate(app, db)
 
 db.init_app(app)
 
-class Audio(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    audio_data = db.Column(db.LargeBinary)
 
 @app.route('/upload', methods=['POST'])
 def upload_file():

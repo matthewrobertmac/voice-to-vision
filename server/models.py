@@ -37,6 +37,9 @@ class Audio2Text(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     audio_file_path = db.Column(db.String(500), unique=False, nullable=True)
     transcript_text = db.Column(db.Text, unique=False, nullable=True)
+    # translation_text = db.Column(db.Text, unique=False, nullable=True)
+    # keywords = db.Column(db.Text, unique=False, nullable=True)
+    # sentiment = db.Column(db.Text, unique=False, nullable=True)
 
     def __repr__(self):
         return f"Audio2Text # {self.id}: {self.audio_file_path}"

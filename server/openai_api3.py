@@ -27,9 +27,10 @@ CORS(app)  # Enable CORS for all routes
 
 with app.app_context():  # Set up an application context
     db.create_all()  # Ensure all the tables exist
+    audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/upload_folder/y2mate.is - Bee Gees - Night Fever-SkypZuY6ZvA-192k-1688158768.mp3"
 
     #Your existing code...
-   # audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/oklahoma.mp3"
+    #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/oklahoma.mp3"
     #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/final_countdown.mp3"
     #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/upload_folder/Opening_Oh_What_A_Beautiful_Mornin_From.mp3"
     #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/upload_folder/y2mate.is_-_CLARA_LUCIANI_-_LA_GRENADE_-_AUDIO_-h59X4qvGFvI-192k-1688076381.mp3"
@@ -38,6 +39,7 @@ with app.app_context():  # Set up an application context
     #Transcribe audio
     audio_file = open(audio_file_path, "rb")
     transcript = openai.Audio.transcribe("whisper-1", audio_file)
+#    translation = openai.Audio.translate(audio_file, target_language="fr")
 
     #Save audio to text
     audio2text = Audio2Text(audio_file_path=audio_file_path, transcript_text=transcript['text'])

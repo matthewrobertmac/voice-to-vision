@@ -46,10 +46,13 @@ def upload_file():
     file.save(file_path)
 
     try:
-        # Transcribe audio
+        # Transcribe audio, translate audio, extract keywords, determine sentiment   
         with open(file_path, 'rb') as audio_file:
             audio_data = audio_file.read()  # Read the binary data of the audio file
             transcript = openai.Audio.transcribe("whisper-1", audio_file)
+ #           translation = openai.Audio.translate("whisper-1", audio_file, target_language="en")
+
+
             transcript_text = transcript.get('text')
     except Exception as e:
         print(f"Error during transcription: {e}")
@@ -129,13 +132,12 @@ def delete_audio2text(audio2text_id):
     return jsonify({'message': 'Audio2Text not found'}), 404
 
 
-@app.route('/text2texts', methods=['GET'])
+@app.route('/text2texts', methods=['GET', 'POST'])
 def get_text2texts():
     text2texts = Text2Text.query.all()
     return jsonify([text2text.to_dict() for text2text in text2texts])
 
 
-@app.route('/text2texts', methods=['POST'])
 def create_text2text():
     data = request.get_json()
     text2text = Text2Text(**data)
@@ -151,6 +153,7 @@ def get_text2text(text2text_id):
         return jsonify(text2text.to_dict())
     return jsonify({'message': 'Text2Text not found'}), 404
 
+### USE THIS PATCH TO ALLOW A USER TO UPLOAD A REVISED TRANSCRIPT 
 
 @app.route('/text2texts/<int:text2text_id>', methods=['PATCH'])
 def update_text2text(text2text_id):
@@ -176,13 +179,12 @@ def delete_text2text(text2text_id):
     return jsonify({'message': 'Text2Text not found'}), 404
 
 
-@app.route('/text2images', methods=['GET'])
+@app.route('/text2images', methods=['GET', 'POST'])
 def get_text2images():
     text2images = Text2Image.query.all()
     return jsonify([text2image.to_dict() for text2image in text2images])
 
 
-@app.route('/text2images', methods=['POST'])
 def create_text2image():
     data = request.get_json()
     text2image = Text2Image(**data)
@@ -199,7 +201,7 @@ def get_text2image(text2image_id):
     return jsonify({'message': 'Text2Image not found'}), 404
 
 
-@app.route('/text2images/<int:text2image_id>', methods=['PATCH'])
+@app.route('/text2images/<int:text2image_id>', methods=['PATCH', 'DELETE'])
 def update_text2image(text2image_id):
     text2image = Text2Image.query.get(text2image_id)
     if not text2image:
@@ -212,7 +214,6 @@ def update_text2image(text2image_id):
     return jsonify(text2image.to_dict())
 
 
-@app.route('/text2images/<int:text2image_id>', methods=['DELETE'])
 def delete_text2image(text2image_id):
     text2image = Text2Image.query.get(text2image_id)
     if text2image:

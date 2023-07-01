@@ -9,7 +9,7 @@ function NavBar() {
         <NavLink exact to="/" activeClassName="navbar-link-active">Home</NavLink>
       </div>
       <div className="navbar-item">
-        <NavLink to="/uploadmp3" activeClassName="navbar-link-active">Upload MP3</NavLink>
+        <NavLink to="/upload" activeClassName="navbar-link-active">Upload MP3</NavLink>
       </div>
       <div className="navbar-item">
         <NavLink to="/audio2texts" activeClassName="navbar-link-active">Audio2Texts</NavLink>
@@ -22,6 +22,24 @@ function NavBar() {
       </div>
       <div className="navbar-item">
         <NavLink to="/profile" activeClassName="navbar-link-active">Profile</NavLink>
+      </div>
+      <div className="navbar-item">
+        <NavLink to="/about" activeClassName="navbar-link-active">About</NavLink>
+      </div>
+      <div className="navbar-item">
+        <NavLink to="/logout" activeClassName="navbar-link-active">Logout</NavLink>
+      </div>
+      <div className="navbar-item">
+        <NavLink to="/login" activeClassName="navbar-link-active">Login</NavLink>
+      </div>
+      <div className='navbar-item'>
+        <NavLink to="/signup" activeClassName="navbar-link-active">Signup</NavLink>
+      </div>
+      <div className="navbar-item">
+        <NavLink to="/form" activeClassName="navbar-link-active">Form</NavLink>
+      </div>
+      <div className="navbar-item">
+        <NavLink to="/upload-or-record-audio" activeClassName="navbar-link-active">Upload or Record Audio</NavLink>
       </div>
     </nav>
   );
