@@ -46,6 +46,11 @@ function NavBar() {
               sx={{ '&:hover': { backgroundColor: 'rgba(0, 0, 255, 0.2)' } }}>
               Upload or Record Audio
             </Button>
+            <Button variant="text" color="inherit" component={Link} to="/livetrascription"
+              sx={{ '&:hover': { backgroundColor: 'rgba(0, 0, 255, 0.2)' } }}>
+              Live Transcription
+            </Button>
+
             <Button variant="text" color="inherit" component={Link} to="/research_paper"
               sx={{ '&:hover': { backgroundColor: 'rgba(0, 0, 255, 0.2)' } }}>
               Research Paper

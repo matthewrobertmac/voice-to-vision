@@ -13,6 +13,7 @@ import Form from "./Form";
 import Audio2Texts from "./Audio2Texts";
 import Text2Images from "./Text2Images";
 import About from "./About";
+import LiveTranscription from "./LiveTranscription";
 import Upload from "./Upload";
 import UploadOrRecordAudio from "./UploadOrRecordAudio";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -89,6 +90,7 @@ function App() {
           <Route path="/uploadorrecordaudio" component={UploadOrRecordAudio} />
           <Route path="/research_paper" component={ResearchPaper} />
           <Route path="/imageresults" component={ImageResults} />
+          <Route path="/livetranscription" component={LiveTranscription} />
         </Switch>
       </BrowserRouter>
     </ThemeProvider>
