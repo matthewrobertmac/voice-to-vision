@@ -2,19 +2,23 @@
 
 import openai
 import os
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
 import io
+from flask_bcrypt import Bcrypt
+
 # from google.cloud import storage 
 from datetime import datetime, timedelta 
 
+
 # Assuming these models are defined in a separate 'models.py' file
-from models import db, Audio2Text, Text2Text, Text2Image, Audio
+from models import db, User, Audio2Text, Text2Text, Text2Image, Audio
 
 app = Flask(__name__)
+app.secret_key = b'Y\xf1Xz\x00\xad|eQ\x80t \xca\x1a\x10K'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.json.compact = False
@@ -29,7 +33,10 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 migrate = Migrate(app, db)
 
 db.init_app(app)
+bcrypt = Bcrypt(app)
+
 CORS(app)  # Enable CORS for all routes
+
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -234,6 +241,53 @@ def delete_text2image(text2image_id):
         db.session.commit()
         return jsonify({'message': 'Text2Image deleted'})
     return jsonify({'message': 'Text2Image not found'}), 404
+
+# AUTHENTICATION 
+
+def get_current_user():
+    return User.query.where( User.id == session.get("user_id") ).first()
+
+def logged_in():
+    return bool( get_current_user() )
+
+# USER SIGNUP #
+
+@app.post('/users')
+def create_user():
+    json = request.json
+    pw_hash = bcrypt.generate_password_hash(json['password']).decode('utf-8')
+    new_user = User(username=json['username'], password_hash=pw_hash)
+    db.session.add(new_user)
+    db.session.commit()
+    session['user_id'] = new_user.id
+    return new_user.to_dict(), 201
+
+
+
+# SESSION LOGIN/LOGOUT#
+
+@app.post('/login')
+def login():
+    json = request.json
+    user = User.query.where(User.username == json["username"]).first()
+    if user and bcrypt.check_password_hash(user.password_hash, json['password']):
+        session['user_id'] = user.id
+        return user.to_dict(), 201
+    else:
+        return {'message': 'Invalid username or password'}, 401
+
+@app.get('/current_session')
+def check_session():
+    if logged_in():
+        return get_current_user().to_dict(), 200
+    else:
+        return {}, 401
+
+@app.delete('/logout')
+def logout():
+    session['user_id'] = None
+    return {}, 204
+
 
 
 if __name__ == '__main__':
