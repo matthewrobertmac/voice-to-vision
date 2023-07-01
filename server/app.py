@@ -20,7 +20,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.json.compact = False
 
 # storage_client = storage.Client() # it will auto-discover the credentials
-# bucket_name = 'Voice2Vision' # replace with your bucket name
+# bucket_name = 'voice2vision' # replace with your bucket name
 # bucket = storage_client.get_bucket(bucket_name)
 
 UPLOAD_FOLDER = '/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/upload_folder'  # Change this to your path
@@ -30,7 +30,6 @@ migrate = Migrate(app, db)
 
 db.init_app(app)
 CORS(app)  # Enable CORS for all routes
-
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
