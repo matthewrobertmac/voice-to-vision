@@ -18,6 +18,8 @@ openai = "*"
 flask-restful = "*"
 youtube-dl = "*"
 yt-dlp = "*"
+google-cloud = "*"
+google-cloud-storage = "*"
 
 [requires]
 python_full_version = "3.8.13"
