@@ -5,6 +5,9 @@ import NavBar from "./NavBar";
 import Home from "./Home";
 import Profile from "./Profile";
 import Text2Texts from "./Text2Texts";
+import ImageResults from "./ImageResults";
+import ResearchPaper from "./ResearchPaper.js";
+import Form from "./Form";
 import Audio2Texts from "./Audio2Texts";
 import Text2Images from "./Text2Images";
 import About from "./About";
@@ -53,6 +56,7 @@ function App() {
         />
         <Route path = '/about' component = {About} />
         <Route path = '/upload' component = {Upload} />
+        <Route path = '/form' component = {Form} />
         <Route
           path="/text2texts"
           component={Text2Texts}
@@ -67,6 +71,9 @@ function App() {
           component={Text2Images}
         />
         <Route path="/uploadorrecordaudio" component={UploadOrRecordAudio} />
+        <Route path="/research_paper" component={ResearchPaper} />
+        <Route path="/imageresults" component={ImageResults} />
+        
       </Switch>
     </BrowserRouter>
   );
