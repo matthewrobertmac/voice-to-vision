@@ -8,6 +8,8 @@ from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
 import io
+from google.cloud import storage 
+from datetime import datetime, timedelta 
 
 # Assuming these models are defined in a separate 'models.py' file
 from models import db, Audio2Text, Text2Text, Text2Image, Audio
@@ -17,6 +19,11 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.json.compact = False
 
+storage_client = storage.Client() # it will auto-discover the credentials
+bucket_name = 'your-bucket-name' # replace with your bucket name
+bucket = storage_client.get_bucket(bucket_name)
+
+
 UPLOAD_FOLDER = '/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/upload_folder'  # Change this to your path
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -25,6 +32,19 @@ migrate = Migrate(app, db)
 db.init_app(app)
 CORS(app)  # Enable CORS for all routes
 
+@app.route('/generate-upload-url', methods=['POST'])
+def generate_upload_url():
+    file_name = request.json['filename']
+    blob = bucket.blob(file_name)
+
+    url = blob.generate_signed_url(
+        version='v4',
+        expiration=timedelta(minutes=15),
+        method='PUT',
+        content_type=request.json['contentType']
+    )
+
+    return jsonify({'url': url})
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -179,11 +199,19 @@ def delete_text2text(text2text_id):
     return jsonify({'message': 'Text2Text not found'}), 404
 
 
-@app.route('/text2images', methods=['GET', 'POST'])
+@app.route("/text2images", methods=["GET", "POST"])
+
 def get_text2images():
     text2images = Text2Image.query.all()
-    return jsonify([text2image.to_dict() for text2image in text2images])
-
+    response = [
+        {
+            "id": text2image.id,
+            "prompt": text2image.prompt,
+            "image_url": text2image.image_path,  # Use image_path as image_url
+        }
+        for text2image in text2images
+    ]
+    return jsonify(response)
 
 def create_text2image():
     data = request.get_json()
