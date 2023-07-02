@@ -24,7 +24,7 @@ class Audio(db.Model, SerializerMixin):
         return {
             'id': self.id,
             'audio_data': self.audio_data.decode(),
-            'name': self.name
+            #'name': self.name
         }
 
 
@@ -65,9 +65,12 @@ class Text2Text(db.Model, SerializerMixin):
         return f"Text2Text # {self.id}: {self.prompt}"
 
 
+
 class Text2Image(db.Model, SerializerMixin):
     __tablename__ = 'text2images'
 
     id = db.Column(db.Integer, primary_key=True)
     prompt = db.Column(db.Text, nullable=True)
     image_path = db.Column(db.String, nullable=True)
+
+

@@ -58,13 +58,23 @@ with app.app_context():  # Set up an application context
     db.create_all()  # Ensure all the tables exist
     #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/upload_folder/y2mate.is - Bee Gees - Night Fever-SkypZuY6ZvA-192k-1688158768.mp3"
 
-    #Your existing code...
+    audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/onlymp3.to - American Pie-ngDJIjbAvz4-192k-1688318938.mp3"
+    # Test Audio File
     #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/oklahoma.mp3"
     #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/final_countdown.mp3"
     #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/upload_folder/Opening_Oh_What_A_Beautiful_Mornin_From.mp3"
-    audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/upload_folder/y2mate.is_-_CLARA_LUCIANI_-_LA_GRENADE_-_AUDIO_-h59X4qvGFvI-192k-1688076381.mp3"
-    
-
+    #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/upload_folder/y2mate.is_-_CLARA_LUCIANI_-_LA_GRENADE_-_AUDIO_-h59X4qvGFvI-192k-1688076381.mp3"
+    #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/ronaldreaganatimeforchoosing.mp3"
+    # French 
+    #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/onlymp3.to - Stromae - papaoutai Official Video -oiKj0Z_Xnjc-192k-1688315221.mp3"
+    #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/onlymp3.to - Indila - Derni re Danse Clip Officiel -K5KAc5CoCuk-192k-1688314629.mp3"
+    # Ave Maria 
+    #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/onlymp3.to - Ennio Morricone - Ave Maria Guarani -The Mission OST-VSWWLTqNRoU-192k-1688314674.mp3"
+    # Ukraine 
+    #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/tina-karol_-_dobriy-vechÑ_r-tobÑ_-pane-gospodaryu.mp3"
+    #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/onlymp3.to -  - Near Peremyshl - Ukrainian song-8nZlrjasG5c-192k-1687387167.mp3"
+    #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/onlymp3.to - The March of Ukrainian Nationalists 1929 1932 sung by Zo ana-1R7MTG-rGCo-192k-1687387121.mp3"
+    #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/onlymp3.to - Dobry Vechir Tobi-ntrBPWh-RAg-192k-1687559073.mp3"
     #Transcribe audio
     audio_file = open(audio_file_path, "rb")
     transcript = openai.Audio.translate("whisper-1", audio_file)
@@ -81,11 +91,13 @@ with app.app_context():  # Set up an application context
     response = openai.Completion.create(
         model="text-davinci-003",
         prompt=f"Generate a visual prompt for OpenAI DALL-E 2 using the lyrics from: {transcript} and excluding repetition in the transcript. Use the full transcript, not just the beginning. Use artistic styling and photographic / artistic styling and terms",
-        #prompt=f"Render a composite illustration that visually interprets the entire lyrics from the provided transcript {transcript}. Ensure to avoid any repetitive elements from the transcript in your creation. Embrace a blend of artistic and photographic styles in your execution. Remember to incorporate a rich array of artistic techniques throughout the entirety of the image, and not just focusing on the initial parts. The final output should be a fusion of both creative artistic expression and photographic realism.",
+        #prompt=f"generate a prompt for dalle-2: Render a composite illustration that visually interprets the entire lyrics from the provided transcript {transcript}. Ensure to avoid any repetitive elements from the transcript in your creation. Embrace a blend of artistic and photographic styles in your execution. Remember to incorporate a rich array of artistic techniques throughout the entirety of the image, and not just focusing on the initial parts. The final output should be a fusion of both creative artistic expression and photographic realism.",
         #prompt=f"Generate a stunning and dramatic watercolor painting from the provided transcript {transcript}, including bright colors to represent areas of positive sentiment and dark colors to represent areas of negative sentiment.",
-
+        #prompt=f"create album art from the provided transcript {transcript}. The album art should be a fusion of both creative artistic expression and photographic realism. The final output should be a composite illustration that visually interprets the entire lyrics from the provided transcript {transcript}. Ensure to avoid any repetitive elements from the transcript in your creation. Embrace a blend of artistic and photographic styles in your execution. Remember to incorporate a rich array of artistic techniques throughout the entirety of the image, and not just focusing on the initial parts.",
+        #prompt=f"Generate a visual prompt for OpenAI DALL-E 2 using the lyrics from: {transcript} and excluding repetition in the transcript. Use the full transcript, not just the beginning. Use artistic styling and photographic / artistic styling and terms & From the lyrics here, generate a stunning and dramatic watercolor painting from the provided transcript {transcript}.",
+        #prompt=f"Inspired by the lyrics {transcript}, create a childrens drawing.",
         max_tokens=200,
-        temperature=0
+        temperature=1
     )
 
     choices = response['choices']
@@ -102,7 +114,7 @@ with app.app_context():  # Set up an application context
     db.session.add(text2text)
     db.session.commit()
 
-    for i in range(1):
+    for i in range(2):
         # Generate image
         response = openai.Image.create(
             prompt=dalle2prompt,
@@ -119,6 +131,7 @@ with app.app_context():  # Set up an application context
         gcs_bucket_name = 'voice2vision'
 
         gcs_image_url = save_to_gcs(image_content, original_filename, gcs_bucket_name, i+1) 
+        print(gcs_bucket_name, gcs_image_url)
 
         # Save text to image
         text2image = Text2Image(prompt=dalle2prompt, image_path=gcs_image_url)
