@@ -16,12 +16,22 @@ function Audio2Texts() {
   return (
     <div>
       <h1>Audio2Texts</h1>
-      {audio2texts.map((audio2text) => (
-        <div key={audio2text.id}>
-          <p>{audio2text.audio_file_path}</p>
-          <p>{audio2text.transcript_text}</p>
-        </div>
-      ))}
+      <table style={{width: "100%", backgroundColor: "#ADD8E6"}}>
+        <thead>
+          <tr>
+            <th>Audio File Path</th>
+            <th>Transcript Text</th>
+          </tr>
+        </thead>
+        <tbody>
+          {audio2texts.map((audio2text) => (
+            <tr key={audio2text.id}>
+              <td>{audio2text.audio_file_path}</td>
+              <td>{audio2text.transcript_text}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
