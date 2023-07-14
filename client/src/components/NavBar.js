@@ -7,7 +7,7 @@ function NavBar() {
       <Toolbar>
         <Box sx={{ display: 'flex', flexGrow: 1, justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h6" style={{ fontFamily: 'Arial, sans-serif' }}>
-            My Application
+            Voice-to-Vision
           </Typography>
           <Box sx={{ '& > :not(style)': { m: 1, textTransform: 'none', fontFamily: 'Verdana, sans-serif' } }}>
             <Button variant="text" color="inherit" component={Link} to="/" 
@@ -26,10 +26,6 @@ function NavBar() {
               sx={{ '&:hover': { backgroundColor: 'rgba(0, 0, 255, 0.2)' } }}>
               Upload
             </Button>
-            <Button variant="text" color="inherit" component={Link} to="/form"
-              sx={{ '&:hover': { backgroundColor: 'rgba(0, 0, 255, 0.2)' } }}>
-              Form
-            </Button>
             <Button variant="text" color="inherit" component={Link} to="/text2texts"
               sx={{ '&:hover': { backgroundColor: 'rgba(0, 0, 255, 0.2)' } }}>
               Text to Texts
@@ -45,10 +41,6 @@ function NavBar() {
             <Button variant="text" color="inherit" component={Link} to="/uploadorrecordaudio"
               sx={{ '&:hover': { backgroundColor: 'rgba(0, 0, 255, 0.2)' } }}>
               Upload or Record Audio
-            </Button>
-            <Button variant="text" color="inherit" component={Link} to="/livetrascription"
-              sx={{ '&:hover': { backgroundColor: 'rgba(0, 0, 255, 0.2)' } }}>
-              Live Transcription
             </Button>
 
             <Button variant="text" color="inherit" component={Link} to="/research_paper"

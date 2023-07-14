@@ -52,27 +52,9 @@ migrate = Migrate(app, db)
 db.init_app(app)
 CORS(app)  # Enable CORS for all routes
 
-with app.app_context():  # Set up an application context
-    db.create_all()  # Ensure all the tables exist
-    #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/upload_folder/y2mate.is - Bee Gees - Night Fever-SkypZuY6ZvA-192k-1688158768.mp3"
-
-    #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/onlymp3.to - American Pie-ngDJIjbAvz4-192k-1688318938.mp3"
-    # Test Audio File
-    #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/oklahoma.mp3"
-    #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/final_countdown.mp3"
-    #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/upload_folder/Opening_Oh_What_A_Beautiful_Mornin_From.mp3"
-    #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/ronaldreaganatimeforchoosing.mp3"
-    # French 
+with app.app_context(): 
+    db.create_all()  
     audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/upload_folder/y2mate.is_-_CLARA_LUCIANI_-_LA_GRENADE_-_AUDIO_-h59X4qvGFvI-192k-1688076381.mp3"
-    #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/onlymp3.to - Stromae - papaoutai Official Video -oiKj0Z_Xnjc-192k-1688315221.mp3"
-    #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/onlymp3.to - Indila - Derni re Danse Clip Officiel -K5KAc5CoCuk-192k-1688314629.mp3"
-    # Ave Maria 
-    #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/onlymp3.to - Ennio Morricone - Ave Maria Guarani -The Mission OST-VSWWLTqNRoU-192k-1688314674.mp3"
-    # Ukraine 
-    #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/tina-karol_-_dobriy-vechÑ_r-tobÑ_-pane-gospodaryu.mp3"
-    #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/onlymp3.to -  - Near Peremyshl - Ukrainian song-8nZlrjasG5c-192k-1687387167.mp3"
-    #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/onlymp3.to - The March of Ukrainian Nationalists 1929 1932 sung by Zo ana-1R7MTG-rGCo-192k-1687387121.mp3"
-    #audio_file_path = "/Users/mattmacfarlane/Development/code/phase-4b/voice-to-vision/server/test_audio/onlymp3.to - Dobry Vechir Tobi-ntrBPWh-RAg-192k-1687559073.mp3"
   
     # Transcribe audio
     audio_file = open(audio_file_path, "rb")
